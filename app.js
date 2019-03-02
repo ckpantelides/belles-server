@@ -55,7 +55,7 @@ app.post("/post", function(req, res) {
 
   // nodemailer
   var transporter = nodemailer.createTransport({
-    service: "Hotmail",
+    service: "gmail",
     auth: {
       user: email,
       pass: emailPassword
