@@ -31,7 +31,7 @@ app.use(bodyParser.json());
 
 app.post("/post", function(req, res) {
   const newOrder = req.body;
-  // const customerEmail = newOrder.body.token.email
+  const customerEmail = newOrder.body.token.email;
 
   // console.log(newOrder.body.token.id);
   // console.log(newOrder.body.args.billing_name);
