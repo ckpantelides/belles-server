@@ -30,8 +30,14 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.post("/post", function(req, res) {
+  // retrieving order from client via axios XMLHttp request
   const newOrder = req.body;
+  // client's email for use with nodemail
   const customerEmail = newOrder.body.token.email;
+  // client's order
+  const baskets = newOrder.body.baskets;
+  // const util = require("util");
+  // console.log(util.inspect(baskets, false, null, true));
 
   // console.log(newOrder.body.token.id);
   // console.log(newOrder.body.args.billing_name);
@@ -62,12 +68,30 @@ app.post("/post", function(req, res) {
     }
   });
 
+  var content = [];
+  for (var i = 0, l = baskets.length; i < l; i++) {
+    content.push(
+      "<tr><td>" +
+        baskets[i].name +
+        "</td><td>" +
+        baskets[i].cart +
+        "</td><td>" +
+        baskets[i].price +
+        "</td></tr>"
+    );
+  }
+
   var mailOptions = {
     from: email,
     to: customerEmail,
     subject: "Thank you for your order",
-    text: "Thanks so much!"
+    html:
+      "<b>your order</b>" +
+      "<table><th>type</th><th>boxes</th><th>price</th>" +
+      content +
+      "</table>"
   };
+
   transporter.sendMail(mailOptions, function(error, info) {
     if (error) {
       console.log(error);
@@ -82,7 +106,6 @@ const HTTP_PORT = 5400;
 app.listen(HTTP_PORT);
 console.log(`Server running on port ${HTTP_PORT}`);
 */
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Our app is running on port ${PORT}`);
