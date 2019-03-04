@@ -36,17 +36,18 @@ app.post("/post", function(req, res) {
   const customerEmail = newOrder.body.token.email;
   // client's order
   const baskets = newOrder.body.baskets;
+
+  const cumstomerName = newOrder.body.args.billing_name;
+
   // const util = require("util");
   // console.log(util.inspect(baskets, false, null, true));
 
   // console.log(newOrder.body.token.id);
-  // console.log(newOrder.body.args.billing_name);
-  // console.log(newOrder);
 
   // email can be added for stripe auto receipts:
   // receipt_email:
 
-  // Token is created using Checkout
+  // Token is created using Stripe Checkout
   // Get the payment token ID submitted by the form:
   const token = newOrder.body.token.id;
 
@@ -59,7 +60,72 @@ app.post("/post", function(req, res) {
     });
   })();
 
-  // nodemailer
+  // customer's order (to be passed to Message email object below)
+  var content = "";
+  for (var i = 0, l = baskets.length; i < l; i++) {
+    content +=
+      "<tr><td>" +
+      baskets[i].name +
+      "</td><td>" +
+      baskets[i].cart +
+      "</td><td>" +
+      baskets[i].price +
+      "</td></tr>";
+  }
+  console.log(content);
+
+  // nodemailer for development using ethereal email
+  nodemailer.createTestAccount((err, account) => {
+    if (err) {
+      console.error("Failed to create a testing account. " + err.message);
+      return process.exit(1);
+    }
+
+    console.log("Credentials obtained, sending message...");
+
+    // Create a SMTP transporter object
+    let transporter = nodemailer.createTransport({
+      host: account.smtp.host,
+      port: account.smtp.port,
+      secure: account.smtp.secure,
+      auth: {
+        user: account.user,
+        pass: account.pass
+      }
+    });
+
+    // Message object
+    let message = {
+      from: "Sender Name <sender@example.com>",
+      to: "Recipient <recipient@example.com>",
+      subject: "Nodemailer is unicode friendly ✔",
+      text: "Hello to myself!",
+      html:
+        "<body style='text-align:center'>" +
+        "<p>Thank you " +
+        cumstomerName +
+        " for your order!</p>" +
+        "<b>your order:</b>" +
+        "<table style='text-align:center; margin-left:auto;margin-right:auto;margin-top:10px'>" +
+        "<th>type</th><th>boxes</th><th>price</th>" +
+        content +
+        "</table>" +
+        "<p>We'll be baking and posting your goodies tomorrow!</p></body>"
+    };
+
+    transporter.sendMail(message, (err, info) => {
+      if (err) {
+        console.log("Error occurred. " + err.message);
+        return process.exit(1);
+      }
+
+      console.log("Message sent: %s", info.messageId);
+      // Preview only available when sending through an Ethereal account
+      console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    });
+  });
+  /*
+  // nodemailer for production
   var transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -68,28 +134,21 @@ app.post("/post", function(req, res) {
     }
   });
 
-  var content = [];
-  for (var i = 0, l = baskets.length; i < l; i++) {
-    content.push(
-      "<tr><td>" +
-        baskets[i].name +
-        "</td><td>" +
-        baskets[i].cart +
-        "</td><td>" +
-        baskets[i].price +
-        "</td></tr>"
-    );
-  }
-
   var mailOptions = {
     from: email,
     to: customerEmail,
     subject: "Thank you for your order",
     html:
-      "<b>your order</b>" +
-      "<table><th>type</th><th>boxes</th><th>price</th>" +
-      content +
-      "</table>"
+      "<body style='text-align:center'>" +
+        "<p>Thank you " +
+        cumstomerName +
+        " for your order!</p>" +
+        "<b>your order:</b>" +
+        "<table style='text-align:center; margin-left:auto;margin-right:auto;margin-top:10px'>" +
+        "<th>type</th><th>boxes</th><th>price</th>" +
+        content +
+        "</table>" +
+        "<p>We'll be baking and posting your goodies tomorrow!</p></body>"
   };
 
   transporter.sendMail(mailOptions, function(error, info) {
@@ -99,6 +158,7 @@ app.post("/post", function(req, res) {
       console.log("Email sent: " + info.response);
     }
   });
+  */
 });
 /*
 const HTTP_PORT = 5400;
@@ -106,6 +166,7 @@ const HTTP_PORT = 5400;
 app.listen(HTTP_PORT);
 console.log(`Server running on port ${HTTP_PORT}`);
 */
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Our app is running on port ${PORT}`);
